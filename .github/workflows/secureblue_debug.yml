@@ -1,0 +1,26 @@
+name: Secureblue debug CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - "build/custom_vm/secureblue/**"
+      - "build/custom_vm/cidata/**"
+      - ".github/**"
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v7
+    - name: Build with QEMU
+      run: |
+        source ./.github/scripts/build-common.sh
+        # Dummy files
+        touch build/custom_vm/cidata/root_files/usr/local/bin/{linux_vm_manager,tun2proxy-bin} build/custom_vm/secureblue/u-boot.bin
+        cd build/custom_vm/secureblue
+        touch GITHUB_ACTION
+        sudo bash build.sh

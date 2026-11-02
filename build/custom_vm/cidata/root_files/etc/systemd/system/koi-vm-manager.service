@@ -1,0 +1,55 @@
+[Unit]
+Description=koiTerminal linux_vm_manager: guest agent and services
+Requires=koi-cidata.service koi-namespace.service
+Wants=koi-date.service koi-stty.service
+After=koi-cidata.service koi-namespace.service
+Before=network.target
+JoinsNamespaceOf=koi-namespace.service
+
+[Service]
+ExecStartPre=/usr/bin/sh -c "/usr/bin/umask 007 && /usr/bin/mkdir -p /tmp/linux_vm_manager && /usr/bin/chmod 770 /tmp/linux_vm_manager && ( /usr/bin/umask 007 && /usr/bin/mkfifo /tmp/linux_vm_manager/{date,stty}.pipe /run/linux_vm_manager/koi-grdctl-creds-{out,inactive}.pipe || /usr/bin/true ) && /usr/bin/chmod 660 /tmp/linux_vm_manager/{date,stty}.pipe /run/linux_vm_manager/koi-grdctl-creds-{out,inactive}.pipe"
+# gnome-remote-desktop credential setter pipe: only koi-vm-manager and gnome-remote-desktop group can read write.
+# linux_vm_manager is responsible for moving it to /run/linux_vm_manager/koi-grdctl-creds.pipe.
+ExecStartPre=+/usr/bin/chown koi-vm-manager:gnome-remote-desktop /run/linux_vm_manager/koi-grdctl-creds-out.pipe /run/linux_vm_manager/koi-grdctl-creds-inactive.pipe
+ExecStart=/usr/bin/sh -c '/run/cidata/root_files/usr/local/bin/linux_vm_manager'
+Restart=on-failure
+# User=nobody
+DynamicUser=yes
+Group=koi-services
+RestartSec=1s
+RestartSteps=8
+RestartMaxDelaySec=256s
+
+DevicePolicy=closed
+InaccessiblePaths=/run/dbus/ /run/user/
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+NoNewPrivileges=yes
+# PrivateDevices=yes
+# DeviceAllow does not work, though
+DeviceAllow=/dev/vsock
+PrivateIPC=yes
+# PrivateNetwork=yes
+# ProcSubset=pid
+ProtectClock=yes
+ProtectControlGroups=yes
+ProtectHostname=yes
+ProtectKernelLogs=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+ReadOnlyPaths=/
+PrivateTmp=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_VSOCK
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallFilter=~@aio @chown @keyring @memlock @mount @privileged @resources @setuid memfd_create
+SystemCallErrorNumber=EPERM
+CapabilityBoundingSet=
+ReadWritePaths=
+
+
+[Install]
+WantedBy=multi-user.target
